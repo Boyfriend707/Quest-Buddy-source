@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
+import { getVersion } from '@tauri-apps/api/app'
 import { useSettings, type Theme, type FontSize } from './SettingsContext'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 
@@ -28,9 +29,14 @@ interface Props {
 export default function Settings({ open, onClose }: Props) {
   const { settings, update, reset } = useSettings()
   const [autoStartState, setAutoStartState] = useState(false)
+  const [appVersion, setAppVersion] = useState('')
 
   useEffect(() => {
     invoke<boolean>('get_auto_start').then(setAutoStartState).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    getVersion().then(setAppVersion).catch(() => {})
   }, [])
 
   return (
@@ -192,6 +198,7 @@ export default function Settings({ open, onClose }: Props) {
           <button className="settings-reset" onClick={() => reset()}>
             Reset to defaults
           </button>
+          <div className="settings-version">v{appVersion}</div>
         </div>
       </div>
     </>

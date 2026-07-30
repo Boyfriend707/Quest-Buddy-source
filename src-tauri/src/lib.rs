@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use std::sync::mpsc;
 use std::time::Duration;
 use tauri::Emitter;
+use tauri::Manager;
 use serde_json::Value;
 
 mod plugins;
@@ -363,6 +364,12 @@ fn start_watcher(handle: tauri::AppHandle) {
 pub fn run() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+        }))
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 api.prevent_close();
