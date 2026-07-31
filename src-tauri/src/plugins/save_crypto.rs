@@ -4,6 +4,13 @@ use aes::cipher::generic_array::GenericArray;
 
 const KEY: &[u8; 32] = b"UKu52ePUBwetZ9wNX88o54dnfKRu0T1l";
 
+pub fn is_save_slot(name: &str) -> bool {
+    let base = name.strip_suffix(".dat").unwrap_or(name);
+    base.strip_prefix("user")
+        .map(|digits| !digits.is_empty() && digits.bytes().all(|b| b.is_ascii_digit()))
+        .unwrap_or(false)
+}
+
 pub fn decrypt_save(data: &[u8]) -> Option<String> {
     let data = data.get(22..)?;
 

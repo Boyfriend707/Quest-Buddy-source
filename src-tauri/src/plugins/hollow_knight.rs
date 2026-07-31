@@ -88,7 +88,7 @@ pub fn load_most_recent_save() -> Option<SaveData> {
         .filter(|e| {
             let name = e.file_name();
             let name = name.to_string_lossy();
-            name.ends_with(".dat") && name.starts_with("user")
+            save_crypto::is_save_slot(&name)
         })
         .map(|e| e.path())
         .collect();

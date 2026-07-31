@@ -231,7 +231,7 @@ fn most_recent_save_raw() -> Option<(PathBuf, Vec<u8>)> {
         .filter(|e| {
             let name = e.file_name();
             let name = name.to_string_lossy();
-            name.ends_with(".dat") && name.starts_with("user")
+            plugins::save_crypto::is_save_slot(&name)
         })
         .map(|e| e.path())
         .collect();
