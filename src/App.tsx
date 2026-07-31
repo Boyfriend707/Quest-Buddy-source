@@ -4,6 +4,7 @@ import { listen } from '@tauri-apps/api/event'
 import TitleBar from './TitleBar'
 import Settings from './Settings'
 import SaveEditor from './SaveEditor'
+import StartupSplash from './StartupSplash'
 import { useSettings } from './SettingsContext'
 
 interface Progress {
@@ -35,6 +36,13 @@ function App() {
   const [tab, setTab] = useState<'progress' | 'next-steps' | 'editor'>('progress')
   const { settings } = useSettings()
   const notified = useRef(false)
+  const [showSplash, setShowSplash] = useState(settings.startupAnimation)
+
+  useEffect(() => {
+    if (!showSplash) return
+    const t = setTimeout(() => setShowSplash(false), 2000)
+    return () => clearTimeout(t)
+  }, [showSplash])
 
   useEffect(() => {
     invoke<Progress>('get_progress').then(setProgress).catch(console.error)
@@ -72,6 +80,7 @@ function App() {
 
   return (
     <div className="app">
+      {showSplash && <StartupSplash />}
       <TitleBar />
       <div className="container">
         <header>

@@ -128,6 +128,16 @@ export default function Settings({ open, onClose }: Props) {
               <label className="settings-toggle">
                 <input
                   type="checkbox"
+                  checked={settings.startupAnimation}
+                  onChange={() => update({ startupAnimation: !settings.startupAnimation })}
+                />
+                <span className="toggle-track"><span className="toggle-knob" /></span>
+                Startup animation
+              </label>
+
+              <label className="settings-toggle">
+                <input
+                  type="checkbox"
                   checked={settings.rememberWindow}
                   onChange={() => update({ rememberWindow: !settings.rememberWindow })}
                 />

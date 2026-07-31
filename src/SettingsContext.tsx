@@ -10,6 +10,7 @@ export interface Settings {
   compact: boolean
   alwaysOnTop: boolean
   startMinimized: boolean
+  startupAnimation: boolean
   showItems: boolean
   showBosses: boolean
   showNextSteps: boolean
@@ -27,6 +28,7 @@ export const defaultSettings: Settings = {
   compact: false,
   alwaysOnTop: false,
   startMinimized: false,
+  startupAnimation: true,
   showItems: true,
   showBosses: true,
   showNextSteps: true,
@@ -78,6 +80,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     const s = loadSettings()
     if (s.startMinimized) {
       getCurrentWindow().hide()
+    }
+    if (s.alwaysOnTop) {
+      getCurrentWindow().setAlwaysOnTop(true)
     }
     if (s.rememberWindow) {
       const savedPos = localStorage.getItem('quest-buddy-window')
