@@ -2846,7 +2846,7 @@ dependencies = [
 
 [[package]]
 name = "quest-buddy"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "aes",
  "base64 0.22.1",

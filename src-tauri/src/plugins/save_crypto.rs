@@ -38,12 +38,12 @@ pub fn encrypt_save(json: &str, original: &[u8]) -> Option<Vec<u8>> {
     let encrypted = cipher.encrypt_padded_mut::<Pkcs7>(&mut buf, json_bytes.len()).ok()?;
     let encoded = base64::Engine::encode(&base64::engine::general_purpose::STANDARD, encrypted);
 
-    let data_with_trailer = format!("{}\x0B", encoded);
-    let vlq = write_vlq(data_with_trailer.len());
+    let vlq = write_vlq(encoded.len());
 
     let mut result = header.to_vec();
     result.extend_from_slice(&vlq);
-    result.extend_from_slice(data_with_trailer.as_bytes());
+    result.extend_from_slice(encoded.as_bytes());
+    result.push(0x0B);
     Some(result)
 }
 
