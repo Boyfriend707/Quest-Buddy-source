@@ -1,5 +1,7 @@
 use super::save_crypto;
 use serde_json::Value;
+#[cfg(windows)]
+use std::os::windows::process::CommandExt;
 
 const BOSS_KILL_FLAGS: &[(&str, &str)] = &[
     ("killedFalseKnight", "False Knight"),
@@ -45,6 +47,7 @@ pub fn is_running() -> bool {
     let output = std::process::Command::new("tasklist")
         .arg("/FI")
         .arg(format!("IMAGENAME eq {}", process_name))
+        .creation_flags(0x08000000) // CREATE_NO_WINDOW
         .output()
         .ok();
     match output {

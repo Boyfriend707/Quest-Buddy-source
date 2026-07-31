@@ -1,5 +1,7 @@
 use super::save_crypto;
 use serde_json::Value;
+#[cfg(windows)]
+use std::os::windows::process::CommandExt;
 
 #[derive(Debug)]
 pub struct SaveData {
@@ -23,6 +25,7 @@ pub fn is_running() -> bool {
     std::process::Command::new("tasklist")
         .arg("/FI")
         .arg(format!("IMAGENAME eq {}", process_name))
+        .creation_flags(0x08000000) // CREATE_NO_WINDOW
         .output()
         .ok()
         .map(|o| {
