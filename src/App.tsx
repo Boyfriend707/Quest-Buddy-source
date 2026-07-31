@@ -1,10 +1,12 @@
 import { useEffect, useState, useRef } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
+import { check, type Update } from '@tauri-apps/plugin-updater'
 import TitleBar from './TitleBar'
 import Settings from './Settings'
 import SaveEditor from './SaveEditor'
 import StartupSplash from './StartupSplash'
+import UpdateBanner from './UpdateBanner'
 import { useSettings } from './SettingsContext'
 
 interface Progress {
@@ -37,12 +39,39 @@ function App() {
   const { settings } = useSettings()
   const notified = useRef(false)
   const [showSplash, setShowSplash] = useState(settings.startupAnimation)
+  const [update, setUpdate] = useState<Update | null>(null)
 
   useEffect(() => {
     if (!showSplash) return
     const t = setTimeout(() => setShowSplash(false), 2000)
     return () => clearTimeout(t)
   }, [showSplash])
+
+  useEffect(() => {
+    let cancelled = false
+    check()
+      .then(u => {
+        if (!cancelled && u) setUpdate(u)
+      })
+      .catch(err => console.error('update check failed', err))
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  async function checkForUpdates(): Promise<string> {
+    try {
+      const u = await check()
+      if (u) {
+        setUpdate(u)
+        return `v${u.version} available!`
+      }
+      return 'You are up to date!'
+    } catch (err) {
+      console.error('update check failed', err)
+      return 'Update check failed'
+    }
+  }
 
   useEffect(() => {
     invoke<Progress>('get_progress').then(setProgress).catch(console.error)
@@ -95,7 +124,7 @@ function App() {
             <button className="gear-btn" onClick={() => setSettingsOpen(!settingsOpen)} title="Settings">
               &#9881;
             </button>
-            <Settings open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+            <Settings open={settingsOpen} onClose={() => setSettingsOpen(false)} checkForUpdates={checkForUpdates} />
           </div>
         </header>
 
@@ -208,6 +237,7 @@ function App() {
           </div>
         )}
       </div>
+      {update && <UpdateBanner update={update} onDismiss={() => setUpdate(null)} />}
     </div>
   )
 }

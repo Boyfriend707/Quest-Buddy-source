@@ -24,12 +24,15 @@ const sizes: { value: FontSize; label: string }[] = [
 interface Props {
   open: boolean
   onClose: () => void
+  checkForUpdates: () => Promise<string>
 }
 
-export default function Settings({ open, onClose }: Props) {
+export default function Settings({ open, onClose, checkForUpdates }: Props) {
   const { settings, update, reset } = useSettings()
   const [autoStartState, setAutoStartState] = useState(false)
   const [appVersion, setAppVersion] = useState('')
+  const [checking, setChecking] = useState(false)
+  const [updateMsg, setUpdateMsg] = useState('')
 
   useEffect(() => {
     invoke<boolean>('get_auto_start').then(setAutoStartState).catch(() => {})
@@ -202,6 +205,26 @@ export default function Settings({ open, onClose }: Props) {
                 value={settings.customSaveSs}
                 onChange={e => update({ customSaveSs: e.target.value })}
               />
+            </div>
+          </div>
+
+          <div className="settings-group">
+            <h3>Updates</h3>
+            <div className="settings-inner">
+              <button
+                className="settings-check-btn"
+                disabled={checking}
+                onClick={async () => {
+                  setChecking(true)
+                  setUpdateMsg('Checking…')
+                  const msg = await checkForUpdates()
+                  setUpdateMsg(msg)
+                  setChecking(false)
+                }}
+              >
+                {checking ? 'Checking…' : 'Check for updates'}
+              </button>
+              {updateMsg && <div className="settings-update-msg">{updateMsg}</div>}
             </div>
           </div>
 
