@@ -56,6 +56,14 @@ pub fn is_running() -> bool {
     }
 }
 
+pub fn undefeated_bosses(data: &SaveData) -> Vec<&'static str> {
+    BOSS_KILL_FLAGS
+        .iter()
+        .map(|(_, name)| *name)
+        .filter(|name| !data.bosses_defeated.iter().any(|b| b.as_str() == *name))
+        .collect()
+}
+
 pub fn save_path() -> Option<std::path::PathBuf> {
     if let Ok(profile) = std::env::var("USERPROFILE") {
         let path = std::path::PathBuf::from(profile)

@@ -9,13 +9,18 @@ import StartupSplash from './StartupSplash'
 import UpdateBanner from './UpdateBanner'
 import { useSettings } from './SettingsContext'
 
+interface NextStep {
+  title: string
+  detail: string
+}
+
 interface Progress {
   game: string
   running: boolean
   percentage: number
   geo: number
   items: string[]
-  next_steps: string[]
+  next_steps: NextStep[]
   play_time_formatted: string
   max_health: number
   soul_vessels: number
@@ -212,24 +217,34 @@ function App() {
                 {settings.showNextSteps && (
                   <div className="section">
                     <h3>Next Steps</h3>
-                    <ul className="steps">
-                      {progress.next_steps.map((step, i) => (
-                        <li key={i}>{step}</li>
+                    <ol className="steps">
+                      {progress.next_steps.map((s, i) => (
+                        <li className="step" key={i}>
+                          <span className="step-num">{i + 1}</span>
+                          <div className="step-body">
+                            <div className="step-title">{s.title}</div>
+                            <div className="step-detail">{s.detail}</div>
+                          </div>
+                        </li>
                       ))}
-                    </ul>
+                    </ol>
                   </div>
                 )}
               </>
             )}
 
             {showNext && (
-              <div className="section">
-                <ul className="steps">
-                  {progress.next_steps.map((step, i) => (
-                    <li key={i}>{step}</li>
-                  ))}
-                </ul>
-              </div>
+              <ol className="steps">
+                {progress.next_steps.map((s, i) => (
+                  <li className="step" key={i}>
+                    <span className="step-num">{i + 1}</span>
+                    <div className="step-body">
+                      <div className="step-title">{s.title}</div>
+                      <div className="step-detail">{s.detail}</div>
+                    </div>
+                  </li>
+                ))}
+              </ol>
             )}
 
             {showEditor && <SaveEditor />}

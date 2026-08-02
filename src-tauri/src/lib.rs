@@ -11,13 +11,28 @@ mod plugins;
 mod tray;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NextStep {
+    pub title: String,
+    pub detail: String,
+}
+
+impl NextStep {
+    fn new(title: impl Into<String>, detail: impl Into<String>) -> Self {
+        NextStep {
+            title: title.into(),
+            detail: detail.into(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Progress {
     pub game: String,
     pub running: bool,
     pub percentage: f32,
     pub geo: i64,
     pub items: Vec<String>,
-    pub next_steps: Vec<String>,
+    pub next_steps: Vec<NextStep>,
     pub play_time_formatted: String,
     pub max_health: u32,
     pub soul_vessels: u32,
@@ -56,7 +71,7 @@ fn build_progress(
     running: bool,
     save: &plugins::hollow_knight::SaveData,
     items: Vec<String>,
-    next_steps: Vec<String>,
+    next_steps: Vec<NextStep>,
 ) -> Progress {
     Progress {
         game,
@@ -83,7 +98,7 @@ fn build_progress_ss(
     running: bool,
     save: &plugins::silksong::SaveData,
     items: Vec<String>,
-    next_steps: Vec<String>,
+    next_steps: Vec<NextStep>,
 ) -> Progress {
     Progress {
         game,
@@ -128,7 +143,10 @@ fn get_current_progress() -> Progress {
         percentage: 0.0,
         geo: 0,
         items: vec!["No save file found".into()],
-        next_steps: vec!["Start a new game!".into()],
+        next_steps: vec![NextStep::new(
+            "Start a new game!",
+            "Create a save in Hollow Knight and begin your journey through Hallownest.",
+        )],
         play_time_formatted: "—".into(),
         max_health: 0,
         soul_vessels: 0,
@@ -165,28 +183,185 @@ fn hk_items(_data: &plugins::hollow_knight::SaveData) -> Vec<String> {
     items
 }
 
-fn hk_next_steps(data: &plugins::hollow_knight::SaveData) -> Vec<String> {
+fn hk_next_steps(data: &plugins::hollow_knight::SaveData) -> Vec<NextStep> {
     let mut steps = Vec::new();
-    if !data.has_wall_jump {
-        steps.push("Get Mantis Claw (wall jump) from Fungal Wastes".into());
-    }
+
     if !data.has_dash {
-        steps.push("Get Mothwing Cloak (dash) from Greenpath".into());
+        steps.push(NextStep::new(
+            "Get the Mothwing Cloak (Dash)",
+            "Reach Greenpath and defeat Hornet for the first time. The dash lets you cross gaps and open up the world.",
+        ));
     }
-    if !data.has_double_jump {
-        steps.push("Get Monarch Wings (double jump) from Kingdom's Edge".into());
+    if !data.has_wall_jump {
+        steps.push(NextStep::new(
+            "Get the Mantis Claw (Wall Jump)",
+            "Travel to the Mantis Village in the Fungal Wastes and win the trial to earn the wall jump — you'll need it to climb most of Hallownest.",
+        ));
     }
     if !data.has_super_jump {
-        steps.push("Get Crystal Heart (super dash) from Crystal Peak".into());
+        steps.push(NextStep::new(
+            "Get the Crystal Heart (Super Dash)",
+            "In Crystal Peak, take the west path past the Crystal Guardian's room to claim the super dash and blaze across open areas.",
+        ));
     }
     if !data.has_acid_armour {
-        steps.push("Get Isma's Tear (acid immunity) from Royal Waterways".into());
+        steps.push(NextStep::new(
+            "Get Isma's Tear (Acid Immunity)",
+            "Explore the Royal Waterways and follow the southern route to Isma's Grove to earn acid immunity and safely cross acid lakes.",
+        ));
+    }
+    if !data.has_double_jump {
+        steps.push(NextStep::new(
+            "Get the Monarch Wings (Double Jump)",
+            "Defeat Broken Vessel in the Ancient Basin, then climb the ruined path into Kingdom's Edge to claim the wings.",
+        ));
     }
     if !data.has_dream_nail {
-        steps.push("Get Dream Nail from Resting Grounds".into());
+        steps.push(NextStep::new(
+            "Get the Dream Nail",
+            "After gaining Soul powers, visit the Seer in the Resting Grounds to receive the Dream Nail — it reveals hidden lore, dream bosses, and the true ending.",
+        ));
     }
+
+    if data.has_dream_nail && data.dream_essence < 2400 {
+        steps.push(NextStep::new(
+            "Awaken the Dream Nail",
+            format!(
+                "Collect dream essence ({}/2400) from dream warriors, dream bosses, and glowing trees to fully awaken it and unlock the final ending.",
+                data.dream_essence
+            ),
+        ));
+    }
+    if data.grub_count > 0 && data.grub_count < 46 {
+        steps.push(NextStep::new(
+            "Rescue the Remaining Grubs",
+            format!(
+                "You've freed {} of 46 grubs. Find the rest and return them to the Grubfather in the Forgotten Crossroads for rewards.",
+                data.grub_count
+            ),
+        ));
+    }
+    if data.charms_count > 0 && data.charms_count < 40 {
+        steps.push(NextStep::new(
+            "Collect More Charms",
+            format!(
+                "You own {} of 40 charms. Buy from shops, explore secret rooms, and defeat optional bosses to complete the set.",
+                data.charms_count
+            ),
+        ));
+    }
+
+    steps.extend(hk_boss_steps(data));
+
     if steps.is_empty() {
-        steps.push("Explore the endgame \u{2014} aim for 100% completion!".into());
+        steps.push(NextStep::new(
+            "Challenge the Radiance",
+            "Face the Hollow Knight in the Black Egg, then strike the Radiance with the Dream Nail for the final showdown.",
+        ));
+        if data.completion_percentage < 112.0 {
+            steps.push(NextStep::new(
+                "Hunt for 112% Completion",
+                "Hollow Knight maxes out at 112% with the DLC. Track down remaining grubs, charms, dream bosses, and Godhome content.",
+            ));
+        }
+    }
+
+    steps
+}
+
+enum BossGate {
+    Always,
+    Dream,
+    Endgame,
+}
+
+const HK_BOSS_HINTS: &[(&str, BossGate, &str, &str)] = &[
+    (
+        "Soul Master",
+        BossGate::Always,
+        "Defeat the Soul Master",
+        "Climb the Soul Sanctum in the City of Tears. Beating him grants Desolate Dive and unlocks the city's shortcuts.",
+    ),
+    (
+        "Dung Defender",
+        BossGate::Always,
+        "Defeat the Dung Defender",
+        "Find him in the Royal Waterways — he guards the path toward the Beast's Den and the second Dreamer.",
+    ),
+    (
+        "Grey Prince Zote",
+        BossGate::Dream,
+        "Beat Grey Prince Zote",
+        "A dream boss fought in Bretta's house in Dirtmouth. Beware — he gets stronger with every rematch.",
+    ),
+    (
+        "Traitor Lord",
+        BossGate::Endgame,
+        "Defeat the Traitor Lord",
+        "In the deepest part of Queen's Gardens. Beating him opens a path to the White Lady and an ending piece.",
+    ),
+    (
+        "Troupe Master Grimm",
+        BossGate::Endgame,
+        "Summon and defeat Troupe Master Grimm",
+        "Burn the three Grimmkin flames to summon the Grimm Troupe's master in the Howling Cliffs and Dirtmouth.",
+    ),
+    (
+        "Nailsage Sly",
+        BossGate::Endgame,
+        "Defeat Nailsage Sly",
+        "Dream-fight Sly in the shed beneath the Crossroads' Nailsmith. He's blindingly fast — attack once, then dodge.",
+    ),
+    (
+        "Paintmaster Sheo",
+        BossGate::Endgame,
+        "Defeat Paintmaster Sheo",
+        "Dream-fight Sheo in his workshop above the Fungal Wastes. Three graceful phases with a big paintbrush.",
+    ),
+    (
+        "White Defender",
+        BossGate::Endgame,
+        "Defeat the White Defender",
+        "Dream-fight Dung Defender in the Royal Waterways. Every win earns a fragment of a pale secret.",
+    ),
+    (
+        "Hive Knight",
+        BossGate::Endgame,
+        "Defeat the Hive Knight",
+        "At the heart of the Hive, past Queen's Gardens. Defeating him secures the Hiveblood charm.",
+    ),
+    (
+        "Oblobbles",
+        BossGate::Endgame,
+        "Defeat the Oblobbles",
+        "Two floating juggernauts in Queen's Gardens — keep moving to slip between their spit volleys.",
+    ),
+    (
+        "Nightmare King Grimm",
+        BossGate::Endgame,
+        "Defeat Nightmare King Grimm",
+        "The true form of the Grimm Troupe's master. A brutal dance — learn the pufferfish pattern and the fight is yours.",
+    ),
+];
+
+fn hk_boss_steps(data: &plugins::hollow_knight::SaveData) -> Vec<NextStep> {
+    let undefeated: Vec<&str> = plugins::hollow_knight::undefeated_bosses(data);
+    let mut steps = Vec::new();
+    for (name, gate, title, detail) in HK_BOSS_HINTS {
+        if steps.len() >= 3 {
+            break;
+        }
+        if !undefeated.contains(&name) {
+            continue;
+        }
+        let unlocked = match gate {
+            BossGate::Always => true,
+            BossGate::Dream => data.has_dream_nail,
+            BossGate::Endgame => data.has_double_jump,
+        };
+        if unlocked {
+            steps.push(NextStep::new(*title, *detail));
+        }
     }
     steps
 }
@@ -205,19 +380,31 @@ fn ss_items(data: &plugins::silksong::SaveData) -> Vec<String> {
     items
 }
 
-fn ss_next_steps(data: &plugins::silksong::SaveData) -> Vec<String> {
+fn ss_next_steps(data: &plugins::silksong::SaveData) -> Vec<NextStep> {
     let mut steps = Vec::new();
     if !data.has_dash {
-        steps.push("Find the Dash ability".into());
+        steps.push(NextStep::new(
+            "Find the Dash",
+            "Push through Pharloom's early areas — the Dash is the first big movement upgrade and lets you close gaps.",
+        ));
     }
     if !data.has_wall_jump {
-        steps.push("Find the Wall Jump ability".into());
+        steps.push(NextStep::new(
+            "Find the Wall Jump",
+            "Search Pharloom's ancient structures for the Wall Jump to climb vertical spaces and reach new heights.",
+        ));
     }
     if !data.has_double_jump {
-        steps.push("Find the Double Jump ability".into());
+        steps.push(NextStep::new(
+            "Find the Double Jump",
+            "Explore the deeper reaches of Pharloom to find the Double Jump and reach high platforms.",
+        ));
     }
     if steps.is_empty() {
-        steps.push("Keep exploring!".into());
+        steps.push(NextStep::new(
+            "Keep Exploring",
+            "With all movement abilities in hand, hunt down hidden rooms, collectibles, and bosses toward 100% completion.",
+        ));
     }
     steps
 }
