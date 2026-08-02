@@ -608,6 +608,64 @@ h1 {
   line-height: 1.5;
 }
 
+/* Next Steps overlay (compact tab for on-screen use while playing) */
+
+.container.overlay {
+  padding: 6px 8px;
+}
+
+.container.overlay .game-card {
+  padding: 8px 10px;
+}
+
+.container.overlay header {
+  margin-bottom: 6px;
+}
+
+.container.overlay .tabs {
+  margin-bottom: 6px;
+}
+
+.steps.overlay {
+  gap: 3px;
+}
+
+.steps.overlay .step {
+  gap: 7px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border-color: color-mix(in srgb, var(--border) 75%, transparent);
+}
+
+.steps.overlay .step:hover {
+  box-shadow: none;
+}
+
+.steps.overlay .step-num {
+  width: 17px;
+  height: 17px;
+  font-size: 0.6rem;
+  margin-top: 1px;
+}
+
+.steps.overlay .step-title {
+  display: inline;
+  font-size: 0.74rem;
+  margin: 0;
+}
+
+.steps.overlay .step-detail {
+  display: inline;
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.steps.overlay .step-detail::before {
+  content: ' — ';
+  color: var(--accent);
+  opacity: 0.7;
+}
+
 /* Settings */
 
 .settings-overlay {

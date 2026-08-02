@@ -116,7 +116,7 @@ function App() {
     <div className="app">
       {showSplash && <StartupSplash />}
       <TitleBar />
-      <div className="container">
+      <div className={`container${showNext ? ' overlay' : ''}`}>
         <header>
           <div className="header-left">
             <div className="logo">QB</div>
@@ -234,7 +234,7 @@ function App() {
             )}
 
             {showNext && (
-              <ol className="steps">
+              <ol className="steps overlay">
                 {progress.next_steps.map((s, i) => (
                   <li className="step" key={i}>
                     <span className="step-num">{i + 1}</span>

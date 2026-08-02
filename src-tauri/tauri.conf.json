@@ -12,10 +12,12 @@
   "app": {
      "windows": [
        {
-         "label": "main",
-         "title": "QuestBuddy",
-         "width": 400,
-         "height": 600,
+          "label": "main",
+          "title": "QuestBuddy",
+          "width": 400,
+          "height": 600,
+          "minWidth": 260,
+          "minHeight": 140,
           "visible": true,
           "decorations": false,
           "resizable": true,
